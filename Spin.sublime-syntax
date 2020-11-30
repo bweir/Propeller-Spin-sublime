@@ -1,0 +1,224 @@
+%YAML 1.2
+---
+file_extensions:
+  - spin
+
+scope: source.spin
+
+variables:
+  kblock: con|dat|obj|var|pub|pri
+  kcon: true|false|posx|negx|pi|rcfast|rcslow|xinput|xtal1|xtal2|xtal3|pll1x|pll2x|pll4x|pll8x|pll16x
+  kvar: result
+  klogic: if|ifnot|elseif|else|case|repeat|from|to|step|while|until|next|quit|return|abort
+  klock: locknew|lockret|lockclr|lockset
+  kmem: bytefill|wordfill|longfill|bytemove|wordmove|longmove|lookup|lookupz|lookdown|lookdownz|strsize|strcomp
+  kconf: chipver|clkmode|\_clkmode|clkfreq|\_clkfreq|clkset|\_xinfreq|\_stack|\_free
+  kreg: cnt|ctra|ctrb|dira|dirb|ina|inb|outa|outb|frqa|frqb|phsa|phsb|vcfg|vscl|par|spr
+  kwait: waitcnt|waitpeq|waitpne|waitvid
+  kcog: cogid|cognew|coginit|cogstop|reboot
+  kasm: org|fit|res|call|djnz|jmp|jmpret|tjnz|tjz|ret|nr|wr|wc|wz|rdbyte|rdword|rdlong|wrbyte|wrword|wrlong|abs|absneg|neg|negc|negnc|negz|negnz|min|mins|max|maxs|add|addabs|adds|addx|addsx|sub|subabs|subs|subx|subsx|sumc|sumnc|sumz|sumnz|mul|muls|and|andn|or|xor|ones|enc|rcl|rcr|rev|rol|ror|shl|shr|sar|cmp|cmps|cmpx|cmpsx|cmpsub|test|testn|mov|movs|movd|movi|muxc|muxnc|muxz|muxnz|hubop|nop
+  kasmif: if_always|if_never|if_e|if_ne|if_a|if_b|if_ae|if_be|if_c|if_nc|if_z|if_nz|if_c_eq_z|if_c_ne_z|if_c_and_z|if_c_and_nz|if_nc_and_z|if_nc_and_nz|if_c_or_z|if_c_or_nz|if_nc_or_z|if_nc_or_nz|if_z_eq_c|if_z_ne_c|if_z_and_c|if_z_and_nc|if_nz_and_c|if_nz_and_nc|if_z_or_c|if_z_or_nc|if_nz_or_c|if_nz_or_nc
+  keyword: "{{kblock}}|{{kcon}}|{{kvar}}|{{klogic}}|{{klock}}|{{kmem}}|{{kconf}}|{{kreg}}|{{kwait}}|{{kcog}}|{{kasm}}|{{kasmif}}"
+  keywords: \b(?i:{{keyword}})\b
+  directive: \b(?i:byte|word|long|constant|string|float|round|trunc|file)\b
+  type: \b(?i:byte|word|long)\b
+  ident: \b(?!{{keyword}})[[:alpha:]_][[:alnum:]_]*\b
+  inline_comment: /[*](?:[^*]|[*](?!/))*[*]/
+  noise: (?:\s|{{inline_comment}})*
+  char_escape: \\x\h{2}|\\u\h{4}|\\U\h{8}|\\[0-7]{3}|\\.
+  dec_exponent: (?:[eE][-+]??{{dec_digits}})
+  hex_exponent: (?:[pP][-+]??{{dec_digits}})
+  dec_digits: (?:\d+(?:_\d+)*)
+  hex_digits: (?:_?\h+(?:_\h+)*)
+  quaternary_digits: (?:_?[0-3]+(?:_[0-3]+)*)
+  bin_digits: (?:_?[01]+(?:_[01]+)*)
+  ddigits: (?:\d+(?:_\d+)*)
+  hdigits: _?(?:\h+(?:_\h+)*)
+  ohdigits: _?(?:\h*(?:_\h+)*)
+  odigits: _?(?:[0-7]+(?:_[0-7]+)*)
+  bdigits: _?(?:[01]+(?:_[01]+)*)
+
+contexts:
+  main:
+    - include: match-any
+
+  match-any:
+    - include: match-comments
+    - include: match-tokens
+
+  match-comments:
+    # Line comment
+    - match: "'"
+      scope: punctuation.definition.comment.spin
+      push: pop-line-comment
+
+    # Block doc comment
+    - match: "{{"
+      scope: punctuation.definition.comment.begin.spin
+      push:
+        - meta_scope: comment.block.spin
+        - match: "}}"
+          scope: punctuation.definition.comment.end.spin
+          pop: true
+        - match: ^\s*({{)(?!/)
+          captures:
+            1: punctuation.definition.comment.spin
+
+    # Block comment
+    - match: "{"
+      scope: punctuation.definition.comment.begin.spin
+      push:
+        - meta_scope: comment.block.spin
+        - match: "}"
+          scope: punctuation.definition.comment.end.spin
+          pop: true
+        - match: ^\s*({)(?!/)
+          captures:
+            1: punctuation.definition.comment.spin
+
+  pop-line-comment:
+    - meta_scope: comment.line.spin
+    - match: $\n?
+      pop: true
+
+  match-tokens:
+    - include: match-keywords
+    # - include: match-identifier
+    - include: match-literals
+    - include: match-operators
+    # - include: match-punctuation
+
+  match-literals:
+    - include: match-string
+    - include: match-integers
+
+  match-string:
+    - match: '"'
+      scope: punctuation.definition.string.begin.spin
+      push:
+        - meta_scope: string.quoted.double.spin
+        - match: '"'
+          scope: punctuation.definition.string.end.spin
+          pop: true
+
+  match-integers:
+    - include: match-binary-integer
+    - include: match-quaternary-integer
+    - include: match-decimal-integer
+    - include: match-hex-integer
+
+  match-hex-integer:
+    - match: \${{hex_digits}}
+      scope: constant.numeric.integer.hexadecimal.spin
+
+  match-decimal-integer:
+    - match: "{{dec_digits}}"
+      scope: constant.numeric.integer.decimal.spin
+
+  match-binary-integer:
+    - match: \%{{bin_digits}}
+      scope: constant.numeric.integer.binary.spin
+
+  match-quaternary-integer:
+    - match: \%\%{{quaternary_digits}}
+      scope: constant.numeric.integer.quaternary.spin
+
+  match-operators: [
+      # Basic Operators
+      { match: \=, scope: keyword.operator.assignment.spin },
+      { match: :=, scope: keyword.operator.assignment.spin },
+      { match: \+, scope: keyword.operator.spin },
+      { match: \+=, scope: keyword.operator.assignment.spin },
+      { match: \-, scope: keyword.operator.spin },
+      { match: -=, scope: keyword.operator.assignment.spin },
+      { match: \*, scope: keyword.operator.spin },
+      { match: \*=, scope: keyword.operator.assignment.spin },
+      { match: \*\*, scope: keyword.operator.spin },
+      { match: \*\*=, scope: keyword.operator.assignment.spin },
+      { match: /, scope: keyword.operator.spin },
+      { match: /=, scope: keyword.operator.assignment.spin },
+      { match: //, scope: keyword.operator.spin },
+      { match: //=, scope: keyword.operator.assignment.spin },
+      { match: <#, scope: keyword.operator.spin },
+      { match: <#=, scope: keyword.operator.assignment.spin },
+      { match: \#>, scope: keyword.operator.spin },
+      { match: \#>=, scope: keyword.operator.assignment.spin },
+      { match: --, scope: keyword.operator.spin },
+      { match: \+\+, scope: keyword.operator.spin },
+      { match: ^^, scope: keyword.operator.spin },
+      { match: \|\|, scope: keyword.operator.spin },
+
+      # Bitwise Operators
+      { match: \~, scope: keyword.operator.spin },
+      { match: \~\~, scope: keyword.operator.spin },
+      { match: \?, scope: keyword.operator.spin },
+      { match: \|\<, scope: keyword.operator.spin },
+      { match: \>\|, scope: keyword.operator.spin },
+      { match: \~\>, scope: keyword.operator.spin },
+      { match: \~\>=, scope: keyword.operator.assignment.spin },
+      { match: \>\>, scope: keyword.operator.spin },
+      { match: \>\>=, scope: keyword.operator.assignment.spin },
+      { match: \<\<, scope: keyword.operator.spin },
+      { match: \<\<=, scope: keyword.operator.assignment.spin },
+      { match: \-\>, scope: keyword.operator.spin },
+      { match: \-\>=, scope: keyword.operator.assignment.spin },
+      { match: \<\-, scope: keyword.operator.spin },
+      { match: \<\-=, scope: keyword.operator.assignment.spin },
+      { match: \>\<, scope: keyword.operator.spin },
+      { match: \>\<=, scope: keyword.operator.assignment.spin },
+      { match: \&, scope: keyword.operator.spin },
+      { match: \&=, scope: keyword.operator.assignment.spin },
+      { match: \|, scope: keyword.operator.spin },
+      { match: \|=, scope: keyword.operator.assignment.spin },
+      { match: \^, scope: keyword.operator.spin },
+      { match: \^=, scope: keyword.operator.assignment.spin },
+      { match: \!, scope: keyword.operator.spin },
+      { match: \.\., scope: keyword.operator.spin },
+
+      # Boolean Operators
+      { match: \b(?i:and|or|not)\b, scope: keyword.operator.spin },
+      { match: \b(?i:and|or)=\b, scope: keyword.operator.assignment.spin },
+      { match: \=\=, scope: keyword.operator.spin },
+      { match: \=\=\=, scope: keyword.operator.assignment.spin },
+      { match: \<\>, scope: keyword.operator.spin },
+      { match: \<\>\=, scope: keyword.operator.assignment.spin },
+      { match: \<, scope: keyword.operator.spin },
+      { match: \<\=, scope: keyword.operator.assignment.spin },
+      { match: \>, scope: keyword.operator.spin },
+      { match: \>\=, scope: keyword.operator.assignment.spin },
+      { match: \=\<, scope: keyword.operator.spin },
+      { match: \=\<\=, scope: keyword.operator.assignment.spin },
+      { match: \=\>, scope: keyword.operator.spin },
+      { match: \=\>\=, scope: keyword.operator.assignment.spin },
+
+      { match: \@, scope: keyword.operator.spin },
+      { match: \@\@, scope: keyword.operator.spin },
+      { match: \@\@\@, scope: keyword.operator.spin },
+      { match: \#, scope: keyword.operator.spin },
+      { match: ":", scope: keyword.operator.spin },
+    ]
+
+  match-keywords:
+    - match: \b(?i:pri|pub)\b
+      scope: keyword.control.spin
+      push: match-identifier
+
+    - match: "{{keywords}}"
+      scope: keyword.control.spin
+
+    - include: match-directive
+
+  match-directive:
+    - match: "{{type}}"
+      scope: variable.function.spin support.type.builtin.spin
+    - match: '{{directive}}(?=(?:{{noise}}\))*{{noise}}\()'
+      scope: variable.function.spin support.type.builtin.spin
+
+  match-identifier:
+    - match: "{{ident}}"
+      scope: entity.name.function.spin
+    - include: pop-before-blank
+
+  pop-before-blank:
+    - match: (?=\S)
+      pop: true

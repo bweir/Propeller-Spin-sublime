@@ -1,2 +1,3 @@
-# Propeller-Spin-sublime
-Sublime support for Propeller Spin
+# Spin-sublime
+
+Minimal Sublime Text support for the Propeller Spin language.
